@@ -6,6 +6,9 @@ from aiogram.dispatcher.filters import Text
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+import requests# pip install
+from unitconv import *
+from currency import *
 
 
 import os, json, string
@@ -17,7 +20,6 @@ dp = Dispatcher(bot, storage=storage)
 
 async def on_startup(_):
 	print('Bot is online')
-
 
 
 bt_units = KeyboardButton('Единицы Измерения')
@@ -85,8 +87,8 @@ bt_cm = KeyboardButton('См')
 bt_mm = KeyboardButton('Мм')
 bt_back = KeyboardButton('Отмена')
 
-kb_ChooseUnitLentgh = ReplyKeyboardMarkup(resize_keyboard = True, one_time_keyboard = True)
-kb_ChooseUnitLentgh.row(bt_km, bt_m, bt_dm, bt_cm, bt_mm).add(bt_back)
+kb_ChooseUnitLength = ReplyKeyboardMarkup(resize_keyboard = True, one_time_keyboard = True)
+kb_ChooseUnitLength.row(bt_km, bt_m, bt_dm, bt_cm, bt_mm).add(bt_back)
 
 @dp.message_handler(state="*", commands = 'Отмена')
 @dp.message_handler(Text(equals = 'Отмена', ignore_case=True), state = "*")
@@ -99,13 +101,13 @@ async def command_cancelState(message:types.Message, state: FSMContext):
 
 
 @dp.message_handler(Text(equals='Длинна'), state=None)
-async def command_UnitConversionLentgh(message : types.Message):
+async def command_UnitConversionLength(message : types.Message):
 	await FSMAdminLentgh.choise1.set()#																							 Открываем класс
-	await message.answer('Какую е.и желаете конвертировать?', reply_markup=kb_ChooseUnitLentgh)
+	await message.answer('Какую е.и желаете конвертировать?', reply_markup=kb_ChooseUnitLength)
 		
 
 @dp.message_handler(content_types = ['text'], state=FSMAdminLentgh.choise1)
-async def command_UnitConversionLentgh1(message : types.Message, state: FSMContext):
+async def command_UnitConversionLength1(message : types.Message, state: FSMContext):
 	global choise1 
 	choise1 = message.text
 	await FSMAdminLentgh.next()
@@ -113,18 +115,19 @@ async def command_UnitConversionLentgh1(message : types.Message, state: FSMConte
 	
 
 @dp.message_handler(content_types = ['text'], state=FSMAdminLentgh.convNumber)
-async def command_UnitConversionLentgh2(message : types.Message, state: FSMContext):
+async def command_UnitConversionLength2(message : types.Message, state: FSMContext):
 	global convNumber 
 	convNumber = float(message.text)
 	await FSMAdminLentgh.next()
-	await message.answer('В какую е.и желаете конвертировать?', reply_markup=kb_ChooseUnitLentgh)
+	await message.answer('В какую е.и желаете конвертировать?', reply_markup=kb_ChooseUnitLength)
 
 
 @dp.message_handler(content_types = ['text'], state=FSMAdminLentgh.choise2)
-async def command_UnitConversionLentgh3(message : types.Message, state: FSMContext):
+async def command_UnitConversionLength3(message : types.Message, state: FSMContext):
 	global choise2
 	choise2 = message.text
-	print(choise1, convNumber, choise2)
+	await message.answer(str(finally_length(choise1, convNumber, choise2)) + " " + str(choise2))
+	await message.answer('Выберите интересующую вас категорию единиц измерения', reply_markup=kb_ChooseUnitCategory) 
 	await state.finish()#																							 	Закрываем класс
 ###############################################################################################################################################
 
@@ -168,7 +171,8 @@ async def command_UnitConversionWeight2(message : types.Message, state: FSMConte
 async def command_UnitConversionWeight3(message : types.Message, state: FSMContext):
 	global choise2
 	choise2 = message.text
-	print(choise1, convNumber, choise2)
+	await message.answer(str(finally_weight(choise1, convNumber, choise2)) + " " + str(choise2))
+	await message.answer('Выберите интересующую вас категорию единиц измерения', reply_markup=kb_ChooseUnitCategory) 
 	await state.finish()#																							 	Закрываем класс
 ################################################################################################################################################
 
@@ -211,7 +215,8 @@ async def command_UnitConversionSquare2(message : types.Message, state: FSMConte
 async def command_UnitConversionSquare3(message : types.Message, state: FSMContext):
 	global choise2
 	choise2 = message.text
-	print(choise1, convNumber, choise2)
+	await message.answer(str(finally_square(choise1, convNumber, choise2)) + " " + str(choise2))
+	await message.answer('Выберите интересующую вас категорию единиц измерения', reply_markup=kb_ChooseUnitCategory) 
 	await state.finish()#																							 	Закрываем класс
 ###############################################################################################################################################
 
@@ -254,10 +259,9 @@ async def command_UnitConversionVolume2(message : types.Message, state: FSMConte
 async def command_UnitConversionVolume3(message : types.Message, state: FSMContext):
 	global choise2
 	choise2 = message.text
-	print(choise1, convNumber, choise2)
+	await message.answer(str(finally_volume(choise1, convNumber, choise2)) + " " + str(choise2))
+	await message.answer('Выберите интересующую вас категорию единиц измерения', reply_markup=kb_ChooseUnitCategory) 
 	await state.finish()#																							 	Закрываем класс	
-	#print(choise2, 'worked')
-	#print('mb worked')
 ###############################################################################################################################################
 
 
@@ -279,8 +283,77 @@ async def command_UnitConversionVolume3(message : types.Message, state: FSMConte
 
 
 #																	CURRENCY CONVERSION
+bt_currlist = KeyboardButton('Список курса валют')
+bt_currconv = KeyboardButton('Конвертация Валют')
+bt_back = KeyboardButton('Отмена')
+
+kb_ChooseCurrencyFunction = ReplyKeyboardMarkup(resize_keyboard = True, one_time_keyboard = True)
+kb_ChooseCurrencyFunction.row(bt_currlist, bt_currconv).add(bt_back)
+
+@dp.message_handler(Text(equals = 'Валюты'))
+async def command_UnitConversion(message : types.Message):
+	await message.answer('Выберите интересующую вас функцию валют', reply_markup=kb_ChooseCurrencyFunction) 
 
 
+
+
+
+
+
+
+
+#																Список курса валют
+@dp.message_handler(Text(equals='Список курса валют'), state=None)
+async def command_UnitConversionLength(message : types.Message):
+	#await message.answer(f'USD - {str(currency_convert("USD", 1))} kzt;\n'	
+	#					f'EUR - {str(currency_convert("EUR", 1))} kzt;\n'
+	#					f'TRY - {str(currency_convert("TRY", 1))} kzt;\n'	
+	#					f'RUB - {str(currency_convert("RUB", 1))} kzt;\n'
+	#					f'KGS - {str(currency_convert("KGS", 1))} kzt;\n'	
+	#					f'CNY - {str(currency_convert("CNY", 1))} kzt;', )
+	await message.answer(currency_list())
+	await message.answer('Выберите интересующую вас функцию валют', reply_markup=kb_ChooseCurrencyFunction)
+
+
+
+
+# 																Конвертация валют, фсм
+class FSMAdminCurrency(StatesGroup):
+	choise1 = State()
+	convNumber = State()
+
+
+bt_usd = KeyboardButton('USD')
+bt_rub = KeyboardButton('RUB')
+bt_eur = KeyboardButton('EUR')
+bt_try = KeyboardButton('TRY')
+bt_kgs = KeyboardButton('KGS')
+bt_cny = KeyboardButton('CNY')
+bt_back = KeyboardButton('Отмена')
+
+kb_ChooseCurrency = ReplyKeyboardMarkup(resize_keyboard = True, one_time_keyboard = True)
+kb_ChooseCurrency.row(bt_usd, bt_rub, bt_eur, bt_try, bt_kgs, bt_cny).add(bt_back)
+
+
+@dp.message_handler(Text(equals='Конвертация Валют'), state=None)
+async def command_UnitConversionLength(message : types.Message):
+	await FSMAdminCurrency.choise1.set()#																							 Открываем класс
+	await message.answer('Какую валюту желаете конвертировать?', reply_markup=kb_ChooseCurrency)
+
+@dp.message_handler(content_types = ['text'], state=FSMAdminCurrency.choise1)
+async def command_UnitConversionLength1(message : types.Message, state: FSMContext):
+	global choise1 
+	choise1 = message.text
+	await FSMAdminCurrency.next()
+	await message.answer('Введите число', reply_markup = ReplyKeyboardRemove())
+
+@dp.message_handler(content_types = ['text'], state=FSMAdminCurrency.convNumber)
+async def command_UnitConversionLength1(message : types.Message, state: FSMContext):
+	global convNumber 
+	convNumber = message.text
+	await message.answer(f"{str(currency_convert(choise1, convNumber))} KZT")
+	await message.answer('Выберите интересующую вас функцию валют', reply_markup=kb_ChooseCurrencyFunction) 
+	await state.finish()
 
 
 
