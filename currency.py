@@ -48,11 +48,11 @@ def currency_list():
     respCNY = json.loads(responseCNY.text)
 
     return f'USD - {str(respUSD["result"])[0:6]} kzt;\n\
-EUR - {str(respUSD["result"])[0:6]} kzt;\n\
-TRY - {str(respUSD["result"])[0:6]} kzt;\n\
-RUB - {str(respUSD["result"])[0:6]} kzt;\n\
-KGS - {str(respUSD["result"])[0:6]} kzt;\n\
-CNY - {str(respUSD["result"])[0:6]} kzt;'
+EUR - {str(respEUR["result"])[0:6]} kzt;\n\
+TRY - {str(respTRY["result"])[0:6]} kzt;\n\
+RUB - {str(respRUB["result"])[0:6]} kzt;\n\
+KGS - {str(respKGS["result"])[0:6]} kzt;\n\
+CNY - {str(respCNY["result"])[0:6]} kzt;'
                         
 
 
